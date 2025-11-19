@@ -53,13 +53,25 @@ class OrderManager():
         print("2. Change Quantity")
         print("3. Change Both")
 
-        choice = int(input("Enter choice (1-3): "))
+        try:
+            choice = int(input("Enter choice (1-3): "))
+        except ValueError:
+            print("Invalid input. Enter numbers only.")
+            return
+
+        if choice not in [1, 2, 3]:
+            print("Invalid choice.")
+            return
 
         # --- CHANGE ITEM ---
         if choice == 1 or choice == 3:
             print("\nSelect New Category:")
             print("1. Coffees\n2. Starters\n3. Main Course\n4. Desserts")
-            cat = int(input("Enter (1-4): "))
+            try:
+                cat = int(input("Enter (1-4): "))
+            except ValueError:
+                print("Invalid input.")
+                return
 
             if   cat == 1: menu = coffees
             elif cat == 2: menu = starters
@@ -77,7 +89,13 @@ class OrderManager():
                 print(f"{sr}. {item} — Rs. {menu[item]}")
                 sr += 1
 
-            dish_choice = int(input("Enter option: "))
+            try:
+                dish_choice = int(input("Enter option: "))
+                if dish_choice < 1 or dish_choice > len(items):
+                    raise IndexError
+            except (ValueError, IndexError):
+                print("Invalid dish selection!")
+                return
             new_name = items[dish_choice - 1]
             new_price = menu[new_name]
 
@@ -86,12 +104,19 @@ class OrderManager():
 
         # Changing quantity
         if choice == 2 or choice == 3:
-            new_quantity = int(input("Enter new quantity: "))
+            try:
+                new_quantity = int(input("Enter new quantity: "))
+                if new_quantity <= 0:
+                    raise ValueError
+            except ValueError:
+                print("Quantity must be a positive number.")
+                return
+
             order.quantity = new_quantity
 
         print("\n Order Updated Successfully!")
         print("   ", order)
-
+    
     def remove_order(self, id):
         if id in self.orders:
             removed = self.orders.pop(id)
@@ -173,8 +198,12 @@ def generateBill():
 def payment(total):
     print("\n💳  Payment Options")
     print("-" * 40)
-    print("1️⃣ Credit/Debit Card\n2️⃣  UPI\n3️⃣  Cash\n")
-    pay_mode = int(input("Select your payment method (1-3): "))
+    print("1️⃣  Credit/Debit Card\n2️⃣  UPI\n3️⃣  Cash\n")
+    try:
+        pay_mode = int(input("Select your payment method (1-3): "))
+    except ValueError:
+        print("Invalid input. Payment cancelled.")
+        return
 
     match pay_mode:
         case 1:
@@ -185,18 +214,17 @@ def payment(total):
             print("\n✅ Payment Successful via Card!")
         case 2:
             print("\n📱 Please scan the QR code below to pay via UPI:\n")
-            upi_link = f"upi://pay?pa=karandaniel@ybl&pn=The%20Wired%20Mug%20Cafe&am={total}&cu=INR"
-
-            qr = qrcode.QRCode(
-                version=1,
-                box_size=2,
-                border=2
-            )
-            qr.add_data(upi_link)
-            qr.make(fit=True)
-            qr.print_ascii(invert=True)
-            print("\n(Scan with any UPI app to pay)")
-            print("\n✅ Payment Successful via UPI!")
+            try:
+                upi_link = f"upi://pay?pa=karandaniel@ybl&pn=The%20Wired%20Mug%20Cafe&am={total}&cu=INR"
+                qr = qrcode.QRCode(version=1, box_size=2, border=2)
+                qr.add_data(upi_link)
+                qr.make(fit=True)
+                qr.print_ascii(invert=True)
+            except Exception as e:
+                print("⚠️ QR code generation failed. Pay manually!")
+            else:
+                print("\n(Scan with any UPI app to pay)")
+                print("\n✅ Payment Successful via UPI!")
         case 3:
             print("\n💵 Please pay the amount at the counter.")
             print("\n✅ Payment Successful via Cash!")
@@ -219,11 +247,22 @@ def menuItems(menu):
         print("7. Exit\n")
         print("-" * 60)
 
-        choice = int(input("Select item (1-7): "))
+        try:
+            choice = int(input("Select item (1-7): "))
+        except ValueError:
+            print("Enter a valid number!")
+            continue
         if choice == 7:
             return
 
-        quantity = int(input("Enter quantity: "))
+        try:
+            quantity = int(input("Enter quantity: "))
+            if quantity <= 0:
+                raise ValueError
+        except ValueError:
+            print("Quantity must be a positive number!")
+            continue
+
         item_name = list(menu.keys())[choice - 1]
         price = menu[item_name]
 
@@ -258,17 +297,26 @@ while True:
         case "5": order_manager.read_all_orders()
         case "6":
             order_manager.read_all_orders()
-            id = int(input("Enter Order number to delete: "))
-            order_manager.remove_order(id)
+            try:
+                id = int(input("Enter Order number to delete: "))
+                order_manager.remove_order(id)
+            except ValueError:
+                print("Invalid number!")
         case "7":
-            id = int(input("Enter Order number: "))
-            order_manager.order_by_id(id)
+            try:
+                id = int(input("Enter Order number: "))
+                order_manager.order_by_id(id)
+            except ValueError:
+                print("Invalid number!")
         case "8":
             order_manager.read_all_orders()
-            id = int(input("\nEnter the Order number you want to update: "))
-            order_manager.update_order(id)
+            try:
+                id = int(input("\nEnter the Order number you want to update: "))
+                order_manager.update_order(id)
+            except ValueError:
+                print("Invalid number!")
         case "9":
             generateBill()
             break
         case _:
-            print("❌ Invalid Choice!")
+            print("Invalid Choice!")
